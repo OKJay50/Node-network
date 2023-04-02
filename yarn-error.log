@@ -1,0 +1,51 @@
+Arguments: 
+  /nix/store/dj805sw07vvpbxx39c8g67x8qddg0ikw-nodejs-18.12.1/bin/node /nix/store/zdcnqq55qi214j46zgw2qa1jp4dpdf2m-yarn-1.22.19/bin/yarn add Avalanche
+
+PATH: 
+  /home/runner/Node-network/.config/npm/node_global/bin:/home/runner/Node-network/node_modules/.bin:/nix/store/bap4d0lpcrhpwmpb8ayjcgkmvfj62lnq-bash-interactive-5.1-p16/bin:/nix/store/pr5n59mb4jzmfx6kanwxly0l07p861fg-patchelf-0.15.0/bin:/nix/store/dq0xwmsk1g0i2ayg6pb7y87na2knzylh-gcc-wrapper-11.3.0/bin:/nix/store/1gf2flfqnpqbr1b4p4qz2f72y42bs56r-gcc-11.3.0/bin:/nix/store/57xv61c5zi8pphjbcwxxjlgc34p61ic9-glibc-2.35-163-bin/bin:/nix/store/a7gvj343m05j2s32xcnwr35v31ynlypr-coreutils-9.1/bin:/nix/store/1d6ian3r8kdzspw8hacjhl3xkp40g1lj-binutils-wrapper-2.39/bin:/nix/store/039g378vc3pc3dvi9dzdlrd0i4q93qwf-binutils-2.39/bin:/nix/store/dj805sw07vvpbxx39c8g67x8qddg0ikw-nodejs-18.12.1/bin:/nix/store/7rfpsb04f2r6a755bqmmj1i90x8p1b18-typescript-language-server-3.1.0/bin:/nix/store/zdcnqq55qi214j46zgw2qa1jp4dpdf2m-yarn-1.22.19/bin:/nix/store/hqc964yg79161afx85fvcmg1a6879k5i-jest-cli-23.6.0/bin:/nix/store/mydc6f4k2z73xlcz7ilif3v2lcaiqvza-findutils-4.9.0/bin:/nix/store/j9p3g8472iijd50vhdprx0nmk2fqn5gv-diffutils-3.8/bin:/nix/store/89zs7rms6x00xfq4dq6m7mjnhkr8a6r4-gnused-4.8/bin:/nix/store/86bp03jkmsl6f92w0yzg4s59g5mhxwmy-gnugrep-3.7/bin:/nix/store/hwcdqw4jrjnd37wxqgsd47hd0j8bnj09-gawk-5.1.1/bin:/nix/store/cfbhw8r8ags41vwqaz47r583d0p4h4a1-gnutar-1.34/bin:/nix/store/p3m1ndl1lapwrlh698bnb5lvvxh67378-gzip-1.12/bin:/nix/store/a8mhcagrsly7c7mpjrpsnaahk4aax056-bzip2-1.0.8-bin/bin:/nix/store/mblgz65m3zv9x548a3d5m96fj2pbwr09-gnumake-4.3/bin:/nix/store/dsd5gz46hdbdk2rfdimqddhq6m8m8fqs-bash-5.1-p16/bin:/nix/store/v7ljksji50mg3w61dykaa3n3y79n6nil-patch-2.7.6/bin:/nix/store/zlcnmqq14jz5x9439jf937mvayyl63da-xz-5.2.7-bin/bin:/nix/store/y6aj732zm9m87c82fpvf103a1xb22blp-file-5.43/bin:/nix/store/i4kzir3m7mrisxmf5xvlnkw01x4qaqr4-prybar-elisp-0.0.0-e0d9a52/bin:/nix/store/lwwivxf6h7x3cvxp9zv8sj0mv7dak99r-prybar-lua-0.0.0-e0d9a52/bin:/nix/store/gxj28g1cg4hq3qanmjv07156h800qr58-prybar-python3-0.0.0-e0d9a52/bin:/nix/store/hshkjnxrgidigf8x75vg6lqng2xlx9i3-prybar-sqlite-0.0.0-e0d9a52/bin:/nix/store/c4w01bpjgyy5ixmwdk8m1pw87zq4sl26-prybar-tcl-0.0.0-e0d9a52/bin:/nix/store/hpbvrlwd5viqmvcaisb3x0118i913a9n-stderred-0.1.0/bin:/nix/store/js3iwxywwq4yprlijk7mq1fr33s0x1dh-upm-0.0.0-f217365/bin:/nix/store/rdarbi6dk8aqr97f441j4a2yk3ra7ixr-pid1/bin:/nix/store/22jj08nss8zvbgk52ikj09ssg6rw84rv-silver-searcher-2.2.0/bin:/nix/store/3ljjd465fia2ra2i7j4qly7kyg1nci2l-bash/bin:/nix/store/176gh50y24c0lx2bnnmsvf9wazb73php-coreutils-9.0/bin:/nix/store/zaamc32wijqka1mg8w2gr1f6bgvs7yyz-vscode-cpptools-dap-1.3.1/bin:/nix/store/ann2w0blx5vrc8mw1hwnvb37gry6ci9a-replit-python-dap-wrapper-1.0.0/bin:/nix/store/gvzyha79wkr1xazax4fd9nnbj8yp9rv6-node-dap/bin:/nix/store/lyzn4qly8k878lgfy1b399w58q4khys2-fluxbox/bin:/nix/store/qpnf0dafrfsbcwb4z7cphjm0dff0vl7l-prybar-nodejs-0.0.0-e0d9a52/bin:/nix/store/mav4251if1ahjq5vkpwycyyvnmy459c4-pulseaudio-14.2/bin:/nix/store/146hw02zpnhkn5cabjf3pmdl32clz0jn-rfbproxy-0.0.0-9c8ca29/bin:/nix/store/xwl0wqr3g68mx2b60qja3kn865gf45x5-toml-editor-0.0.0-5aba775/bin:/nix/store/bfmyvk668bl0n294qancg8sg5x42p9vx-nix-editor-0.0.0-8e65b7f/bin:/nix/store/0b2bvviijkvq2nvm04dbq3lwlq7h742m-tigervnc-1.12.0/bin:/nix/store/7v07bmyfjq0jdnx6xwxlib05na8kksdf-xwininfo-1.1.4/bin:/nix/store/pv89r9i1d8ajin2vp7qfs63nakg7s17k-replbox/bin:/nix/store/4522jkjzj2nlx2z67325aylg6ngvvg2h-curl-7.80.0-bin/bin:/nix/store/sdpqvnmahizaxbs3nnzmgfgyqsdxb1bw-gnutar-1.34/bin:/nix/store/hisqvx32cd57apbpcsnkpx6k3549wql1-libglvnd-1.4.0/bin:/nix/store/pb6sp9j9bv7s3bk1biqq05w73f40gpg8-ripgrep-13.0.0/bin:/nix/store/44papibkmjkl0854bd3jq5cdsxkf7qry-sd-0.7.6/bin:/nix/store/5bkvi8z49bd19g4m81fdwl61ix3h3z7l-replit-git-askpass/bin:/nix/store/qfxk9gzibng5ghhdq33bjx2cr20xlb8m-replit-git-editor/bin:/nix/store/46b2acjdlzjjz63k9mv4z5h34b9r5riy-moduleit/bin:/nix/store/3agrmrl1dln2ff0mn1kagjpl2ih5lyps-hostingpid1-0.0.1/bin:/home/runner/.nix-profile/bin:/home/runner/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  18.12.1
+
+Platform: 
+  linux x64
+
+Trace: 
+  Error: https://registry.yarnpkg.com/Avalanche: Not found
+      at params.callback [as _callback] (/nix/store/zdcnqq55qi214j46zgw2qa1jp4dpdf2m-yarn-1.22.19/libexec/yarn/lib/cli.js:66145:18)
+      at self.callback (/nix/store/zdcnqq55qi214j46zgw2qa1jp4dpdf2m-yarn-1.22.19/libexec/yarn/lib/cli.js:140890:22)
+      at Request.emit (node:events:513:28)
+      at Request.<anonymous> (/nix/store/zdcnqq55qi214j46zgw2qa1jp4dpdf2m-yarn-1.22.19/libexec/yarn/lib/cli.js:141862:10)
+      at Request.emit (node:events:513:28)
+      at IncomingMessage.<anonymous> (/nix/store/zdcnqq55qi214j46zgw2qa1jp4dpdf2m-yarn-1.22.19/libexec/yarn/lib/cli.js:141784:12)
+      at Object.onceWrapper (node:events:627:28)
+      at IncomingMessage.emit (node:events:525:35)
+      at endReadableNT (node:internal/streams/readable:1359:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+
+npm manifest: 
+  {
+    "name": "nodejs",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "@types/node": "^18.0.6",
+      "node-fetch": "^3.2.6"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
