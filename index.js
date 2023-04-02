@@ -10,54 +10,129 @@ const TARGET_HASH = '0000'; // difficulty target for POW
 const ENCRYPTION_KEY = 'my-secret-key';
 
 class Node {
-  constructor(private_key, resilience)  { this.blockchain = new Blockchain();
+  constructor(private_key, resilience) {
+    this.blockchain = new Blockchain();
     const ava = new Avalanche(node_api, '', '', network_id, 'X');
     this.xchain = ava.XChain();
     this.private_key = private_key;
     this.resilience = resilience;
     this.token_balance = 0;
     this.white_list = [];
-    this.reputation_score = 0; // add reputation score
+    this.reputation_score = 0;
   }
-encrypt_data(data) { 
-const cipher = 
-crypto.createCipher('aes-256-cbc', 
-ENCRYPTION_KEY); 
-let encrypted = cipher.update(data, 
-'utf8', 'hex'); 
-} 
-encrypted += cipher.final('hex'); 
-return encrypted; 
 
-  // ...
+  encrypt_data(data) {
+    const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
+    let encrypted = cipher.update(data, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return encrypted;
+  }
 
-  async update_reputation_score(score) { // add method to update reputation score
+  async update_reputation_score(score) {
     this.reputation_score = score;
   }
 
-  async get_reputation_score() { // add method get reputation score
+  async get_reputation_score() {
     return this.reputation_score;
   }
 
-  async process_transaction(transaction) { // add reward system and update reputation score
+  async process_transaction(transaction) {
     this.token_balance += transaction.fee;
     const reward = this.reputation_score * 0.1;
     this.token_balance += reward;
     const txid = await this.xchain.issueTx(transaction);
     this.update_reputation_score(this.reputation_score * 1.01);
   }
+
+  async add_user_to_whitelist(user) {
+    this.white_list.push(user);
+  }
+
+  async request_data(data_size, user, signature) {
+    try {
+      if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
+        throw new Error('Invalid signature.');
+      }
+
+      if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
+        throw new Error('User does not have enough tokens to request data.');
+      }
+
+      if (!this.white_list.includes(user)) {
+        throw new Error('User is not whitelisted.');
+      }
+
+      const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
+      const utxo = utxos[0];
+
+      const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), data_size, user, this.private_key.getAddressString());
+      const tx = unsigned_tx.sign(this.private_key);
+      const txid = await this.xchain.issueTx(tx);
+      const transaction = {
+        id: txid,
+        from: this.private_key.getAddressString(),
+        to: user,
+        amount: 0,
+        fee: blockchain.calculate_token_fee(data_size),
+        data: this.encrypt_data('This is some data.'),
+        timestamp: Date.now()
+      };
+      this.process_transaction(transaction);
+      return transaction;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async store_data(data, data_size, user, signature) {
+    try {
+      if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
+        throw new Error('Invalid signature.');
+      }
+
+      if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
+        throw new Error('User does not have enough tokens to store data.');
+      }
+
+      const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
+      const utxo = utxos[0];
+
+      const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), 0, user, this.private_key.getAddressString());
+      const tx = unsigned_tx.sign(this.private_key);
+      const txid = await this.xchain.issueTx(tx);
+      const transaction = {
+        id: txid,
+        from: this.private_key.getAddressString(),
+        to: user,
+        amount: 0,
+        fee: blockchain.calculate_token_fee(data_size),
+        data: '',
+        timestamp: Date.now()
+      };
+      this.process_transaction(transaction);
+      const encrypted_data = this.encrypt_data(data);
+      const block = {
+        data: encrypted_data,
+        size: data_size,
+        user: user,
+        timestamp: Date.now()
+      };
+      return {block, transaction};
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
-class BlockChain {
+
+class Blockchain {
   constructor(genesis) {
     this.chain = [genesis];
     this.pending_transactions = [];
     this.difficulty = 5;
   }
 
-  // ...
-
-  async mine_pending_transactions(miner) { // add reward system and update reputation score
+  async mine_pending_transactions(miner) {
     const block = {
       transactions: this.pending_transactions,
       timestamp: Date.now(),
@@ -75,8 +150,8 @@ class BlockChain {
     this.pending_transactions = [];
     this.chain.push(block);
 
-    node = network.find(node => node.private_key === miner.private_key);
-  
+    const node = network.find(node => node.private_key === miner.private_key);
+
     const reward = node.reputation_score * 0.05;
     node.token_balance += reward;
     node.update_reputation_score(node.reputation_score * 1.02);
@@ -84,7 +159,19 @@ class BlockChain {
     return block;
   }
 
-  // ...
+  verify_data(data) {
+    // TODO: Implement data verification
+    return true;
+  }
+
+  calculate_token_fee(data_size) {
+    // TODO: Implement token fee calculation
+    return 0;
+  }
+
+  addBlock(block) {
+    this.chain.push(block);
+  }
 }
 
 class UserInterface {
@@ -93,7 +180,7 @@ class UserInterface {
   }
 
   async add_node_to_list() { // add method to add nodes to the network
-    const user_input = // get user input for private key and resilience
+    const user_input = {}; // get user input for private key and resilience
     const node = new Node(user_input.private_key, user_input.resilience);
     network.push(node);
     // update UI to display the new node and its details
@@ -105,13 +192,13 @@ class UserInterface {
   }
 
   async request_data() { // add method to request data
-    const user_input = // get user input for data size and signature
+    const user_input = {}; // get user input for data size and signature
     const data = await network[this.selected_node].request_data(user_input.data_size, 'user1', user_input.signature);
     // display the requested data on the UI
   }
 
   async store_data() { // add method to store data
-    const user_input = // get user input for data and signature
+    const user_input = {}; // get user input for data and signature
     const result = await network[this.selected_node].store_data(user_input.data, 10, 'user1', user_input.signature);
     blockchain.addBlock(result.block);
     const block = await blockchain.mine_pending_transactions(network[this.selected_node].private_key);
@@ -123,98 +210,54 @@ const ui = new UserInterface();
 ui.add_node_to_list(); // add a node to the network when the UI is initialized
 ui.select_node(0); // select the first node by default
 
-  async store_data(data, data_size, user, signature) {
-    try {
-      if (!this.white_list.includes(user)) {
-        throw new Error('User not authorized to store data on this node.');
-      }
-
-      const data_string = user + data + this.private_key;
-      if (crypto.createHash('sha256').update(data_string).digest('hex') !== signature) {
-        throw new Error('Invalid signature.');
-      }
-
-      if (blockchain.verify_data(data)) {
-        throw new Error('Data contains malicious content.');
-      }
-
-      // Create new block with the provided data and attach POW nonce
-      const block = {
-        data,
-        user,
-        nonce: 0,
-        difficulty: 5 // initial difficulty for POW
-      };
-
-      let hash;
-      do {
-        block.nonce++;
-        hash = crypto.createHash('sha256').update(JSON.stringify(block)).digest('hex');
-      } while (hash.substr(0, block.difficulty) !== TARGET_HASH);
-
-      const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
-      const utxo = utxos[0];
-
-      const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), user, this.token_balance + BLOCK_REWARD);
-      const signed_tx = unsigned_tx.sign(this.private_key);
-      const txid = await this.xchain.issueTx(signed_tx);
-
-      this.token_balance += blockchain.calculate_token_fee(data_size) + BLOCK_REWARD;
-      return { hash, block };
-    } catch (error) {
-      console.error(`Error while storing data: ${error}`);
-      throw error;
+Node.prototype.request_data = async function(data_size, user, signature) {
+  try {
+    if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
+      throw new Error('Invalid signature.');
     }
-  }
 
-  async request_data(data_size, user, signature) {
-    try {
-      if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
-        throw new Error('Invalid signature.');
-      }
-
-      if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
-        throw new Error('User does not have enough tokens to request data.');
-      }
-
-      const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
-      const utxo = utxos[0];
-
-      const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), user, blockchain.calculate_token_fee(data_size));
-      const signed_tx = unsigned_tx.sign(this.private_key);
-      const txid = await this.xchain.issueTx(signed_tx);
-
-      const data = network.retrieve_data(data_size);
-      if (blockchain.verify_data(data)) {
-        throw new Error('Data contains malicious content.');
-      }
-
-      this.token_balance -= blockchain.calculate_token_fee(data_size);
-      return data;
-    } catch (error) {
-      console.error(`Error while requesting data: ${error}`);
-      throw error;
+    if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
+      throw new Error('User does not have enough tokens to request data.');
     }
+
+    const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
+    const utxo = utxos[0];
+
+    const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), user, blockchain.calculate_token_fee(data_size));
+    const signed_tx = unsigned_tx.sign(this.private_key);
+    const txid = await this.xchain.issueTx(signed_tx);
+
+    const data = network.retrieve_data(data_size);
+    if (blockchain.verify_data(data)) {
+      throw new Error('Data contains malicious content.');
+    }
+
+    this.token_balance -= blockchain.calculate_token_fee(data_size);
+    return data;
+  } catch (error) {
+    console.error(`Error while requesting data: ${error}`);
+    throw error;
   }
+}
 
   async add_user_to_whitelist(user) {
-    this.white_list.push(user);
-  }
+  this.white_list.push(user);
+}
 
   async remove_user_from_whitelist(user) {
-    const index = this.white_list.indexOf(user);
-    if (index > -1) {
-      this.white_list.splice(index, 1);
-    }
+  const index = this.white_list.indexOf(user);
+  if (index > -1) {
+    this.white_list.splice(index, 1);
   }
+}
 
   async update_resilience_score(score) {
-    this.resilience = score;
-  }
+  this.resilience = score;
+}
 
   async get_resilience_score() {
-    return this.resilience;
-  }
+  return this.resilience;
+}
 }
 
 class BlockChain {
