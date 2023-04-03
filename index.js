@@ -1,138 +1,127 @@
 const Avalanche = require('avalanche');
 const crypto = require('crypto');
-
+const { Principal } = require('@dfinity/principal');
+const { HttpAgent } = require('@dfinity/agent');
+const { Identity } = require('@dfinity/identity');
 const network_id = 'local';
 const node_api = 'http://localhost:9650';
-
+const polygon_network_id = '0x89';
+const polygon_node_api = 'https://rpc-mainnet.maticvigil.com';
 const BLOCK_REWARD = 10;
-const TARGET_HASH = '0000'; // difficulty target for POW
-
+const TARGET_HASH = '0000'; // difficulty target for POA
 const ENCRYPTION_KEY = 'my-secret-key';
+const encrypted = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
+const decrypted = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
+
+const avalanche = new Avalanche(network_id, node_api);
+const polygon = new Avalanche(polygon_network_id, polygon_node_api);
+const wallet = avalanche.createWallet();
+const address = wallet.getAddress();
+const private_key = wallet.getPrivateKey();
+const public_key = wallet.getPublicKey();
+
+const readlineSync = require('readline-sync');
+const agent = new HttpAgent({host: "http://localhost:8000"});
 
 class Node {
   constructor(private_key, resilience) {
-    this.blockchain = new Blockchain();
-    const ava = new Avalanche(node_api, '', '', network_id, 'X');
-    this.xchain = ava.XChain();
     this.private_key = private_key;
-    this.resilience = resilience;
+    this.public_key = crypto.createPublicKey(private_key);
+    this.address = Principal.selfAuthenticating(new Uint8Array(this.public_key.export({ type: 'spki', format: 'der' })));
     this.token_balance = 0;
-    this.white_list = [];
-    this.reputation_score = 0;
+    this.reputation_score = 0.5;
+    this.resilience = resilience;
   }
 
-  encrypt_data(data) {
-    const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
-    let encrypted = cipher.update(data, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
+  async send_icp_message(message, receiver) {
+    const identity = Identity.fromPrivateKey(this.private_key);
+    const receiver_principal = Principal.fromText(receiver);
+    const response = await agent.fetchRootKey();
+    const root_key = response.rootKey;
+    const actor = Actor.createActor(icp.canisterId, { agent, rootKey: root_key, identity });
+    const result = await actor.send_message(message, this.address, receiver_principal);
+    return result;
+  }
+
+  async receive_icp_message(message_id) {
+    const identity = Identity.fromPrivateKey(this.private_key);
+    const response = await agent.fetchRootKey();
+    const root_key = response.rootKey;
+    const actor = Actor.createActor(icp.canisterId, { agent, rootKey: root_key, identity });
+    const result = await actor.receive_message(message_id, this.address);
+    return result;
+  }
+
+  async mine_pending_transactions() {
+    const block = {
+      transactions: this.pending_transactions,
+      timestamp: Date.now(),
+      miner: this.address.toString(),
+      nonce: 0,
+      difficulty: blockchain.difficulty
+    };
+    // select the validator with the highest active stake
+    const validators = network.filter(node => node.token_balance > 0 && node.reputation_score >= 0.5);
+    const validator = validators.sort((a, b) => b.token_balance - a.token_balance)[0];
+    if (!validator || validator !== this) {
+      console.log(`Error: ${this.address.toString()} is not a valid validator.`);
+      return false;
+    }
+    // add the block to the chain
+    blockchain.addBlock(block);
+    console.log(`Block mined by ${this.address.toString()}: ${JSON.stringify(block)}`);
+    // update tokens and reputation score based on successful block addition
+    const reward_token = block.transactions
+
+    // update tokens and reputation score based on successful block addition
+    const reward_token = block.transactions.length * 2;
+    const reward_reputation = block.transactions.length * 0.1;
+
+    this encrypt_data(data) {
+      const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
+      let encrypted = cipher.update(data, 'utf8', 'hex');
+    }
+    encrypted = cipher.final('hex');
     return encrypted;
   }
 
+  decrypt_data(data) {
+    const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
+    let decrypted = decipher.update(data, 'hex', 'utf8encrypted = cipher.final('hex');
+    return encrypted;
+    // ...
+  }
+
   async update_reputation_score(score) {
+    // add method to update reputation score
     this.reputation_score = score;
   }
 
   async get_reputation_score() {
+    // add method get reputation score
     return this.reputation_score;
   }
 
   async process_transaction(transaction) {
+    // add reward system and update reputation score
     this.token_balance += transaction.fee;
     const reward = this.reputation_score * 0.1;
     this.token_balance += reward;
     const txid = await this.xchain.issueTx(transaction);
     this.update_reputation_score(this.reputation_score * 1.01);
   }
-
-  async add_user_to_whitelist(user) {
-    this.white_list.push(user);
-  }
-
-  async request_data(data_size, user, signature) {
-    try {
-      if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
-        throw new Error('Invalid signature.');
-      }
-
-      if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
-        throw new Error('User does not have enough tokens to request data.');
-      }
-
-      if (!this.white_list.includes(user)) {
-        throw new Error('User is not whitelisted.');
-      }
-
-      const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
-      const utxo = utxos[0];
-
-      const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), data_size, user, this.private_key.getAddressString());
-      const tx = unsigned_tx.sign(this.private_key);
-      const txid = await this.xchain.issueTx(tx);
-      const transaction = {
-        id: txid,
-        from: this.private_key.getAddressString(),
-        to: user,
-        amount: 0,
-        fee: blockchain.calculate_token_fee(data_size),
-        data: this.encrypt_data('This is some data.'),
-        timestamp: Date.now()
-      };
-      this.process_transaction(transaction);
-      return transaction;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  async store_data(data, data_size, user, signature) {
-    try {
-      if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
-        throw new Error('Invalid signature.');
-      }
-
-      if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
-        throw new Error('User does not have enough tokens to store data.');
-      }
-
-      const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
-      const utxo = utxos[0];
-
-      const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), 0, user, this.private_key.getAddressString());
-      const tx = unsigned_tx.sign(this.private_key);
-      const txid = await this.xchain.issueTx(tx);
-      const transaction = {
-        id: txid,
-        from: this.private_key.getAddressString(),
-        to: user,
-        amount: 0,
-        fee: blockchain.calculate_token_fee(data_size),
-        data: '',
-        timestamp: Date.now()
-      };
-      this.process_transaction(transaction);
-      const encrypted_data = this.encrypt_data(data);
-      const block = {
-        data: encrypted_data,
-        size: data_size,
-        user: user,
-        timestamp: Date.now()
-      };
-      return {block, transaction};
-    } catch (error) {
-      console.error(error);
-    }
-  }
 }
 
-
-class Blockchain {
+class BlockChain {
   constructor(genesis) {
     this.chain = [genesis];
     this.pending_transactions = [];
-    this.difficulty = 5;
+    this.difficulty =5;
   }
 
-  async mine_pending_transactions(miner) {
+  // ...
+
+  async mine_pending_transactions(miner) { // add reward system and update reputation score
     const block = {
       transactions: this.pending_transactions,
       timestamp: Date.now(),
@@ -150,7 +139,7 @@ class Blockchain {
     this.pending_transactions = [];
     this.chain.push(block);
 
-    const node = network.find(node => node.private_key === miner.private_key);
+    node = network.find(node => node.private_key === miner.private_key);
 
     const reward = node.reputation_score * 0.05;
     node.token_balance += reward;
@@ -159,28 +148,106 @@ class Blockchain {
     return block;
   }
 
-  verify_data(data) {
-    // TODO: Implement data verification
-    return true;
-  }
-
-  calculate_token_fee(data_size) {
-    // TODO: Implement token fee calculation
-    return 0;
-  }
-
-  addBlock(block) {
-    this.chain.push(block);
-  }
+  // ...
 }
+
+const readlineSync = require('readline-sync');
 
 class UserInterface {
   constructor() {
     this.selected_node = -1;
   }
 
+  async add_node_to_list() {
+    // get user input for private key and resilience
+    const user_input = readlineSync.question('Enter private key and resilience separated by comma: ');
+    const [private_key, resilience] = user_input.split(',');
+    const node = new Node(private_key, resilience);
+    network.push(node);
+    console.log(`Node ${node.private_key} has been added to the network!`);
+  }
+
+  async select_node(node_index) {
+    this.selected_node = node_index;
+    console.log(`Selected node: ${network[this.selected_node].private_key}`);
+  }
+
+  async request_data() {
+    const user_input = readlineSync.question('Enter data size and signature separated by comma: ');
+    const [data_size, signature] = user_input.split(',');
+    const data = await network[this.selected_node].request_data(Number(data_size), 'user1', signature);
+    console.log(`Requested data: ${data}`);
+  }
+
+  async store_data() {
+    const user_input = readlineSync.question('Enter data size and signature separated by comma: ');
+    const [data_size, signature] = user_input.split(',');
+    const result = await network[this.selected_node].store_data('some data', Number(data_size), 'user1', signature);
+    blockchain.addBlock(result.block);
+    const block = await blockchain.minePendingTransactions(network[this.selected_node].private_key);
+    console.log(`New block added to the chain: ${JSON.stringify(block)}`);
+  }
+
+  async view_balance() {
+    console.log(`Your token balance is: ${network[this.selected_node].token_balance}`);
+  }
+
+  async view_reputation_score() {
+    console.log(`Your reputation score is: ${network[this.selected_node].reputation_score}`);
+  }
+
+  async menu() {
+    console.log('\n---Blockchain Network---');
+    console.log('1. Add node');
+    console.log('2. Select node');
+    console.log('3. Request data');
+    console.log('4. Store data');
+    console.log('5. View balance');
+    console.log('6. View reputation score');
+    console.log('7. Quit');
+
+    const user_choice = readlineSync.question('Enter a number to select an action: ');
+    console.log(`You selected option ${user_choice}.`);
+
+    switch (user_choice) {
+      case '1':
+        await this.add_node_to_list();
+        break;
+      case '2':
+        const node_index = readlineSync.question('Enter node index: ');
+        await this.select_node(node_index);
+        break;
+      case '3':
+        await this.request_data();
+        break;
+      case '4':
+        await this.store_data();
+        break;
+      case '5':
+        await this.view_balance();
+        break;
+      case '6':
+        await this.view_reputation_score();
+        break;
+      case '7':
+        console.log('Goodbye!');
+        process.exit(0);
+        break;
+      default:
+        console.log('Invalid input, please try again.');
+        break;
+    }
+    await this.menu();
+  }
+}
+
+const ui = new UserInterface();
+ui.add_node_to_list();
+ui.select_node(0);
+ui.menu();
+}
   async add_node_to_list() { // add method to add nodes to the network
-    const user_input = {}; // get user input for private key and resilience
+    const user_input = // get user input for private key and resilience
     const node = new Node(user_input.private_key, user_input.resilience);
     network.push(node);
     // update UI to display the new node and its details
@@ -192,13 +259,13 @@ class UserInterface {
   }
 
   async request_data() { // add method to request data
-    const user_input = {}; // get user input for data size and signature
+    const user_input = // get user input for data size and signature
     const data = await network[this.selected_node].request_data(user_input.data_size, 'user1', user_input.signature);
     // display the requested data on the UI
   }
 
   async store_data() { // add method to store data
-    const user_input = {}; // get user input for data and signature
+    const user_input = // get user input for data and signature
     const result = await network[this.selected_node].store_data(user_input.data, 10, 'user1', user_input.signature);
     blockchain.addBlock(result.block);
     const block = await blockchain.mine_pending_transactions(network[this.selected_node].private_key);
@@ -210,7 +277,51 @@ const ui = new UserInterface();
 ui.add_node_to_list(); // add a node to the network when the UI is initialized
 ui.select_node(0); // select the first node by default
 
-Node.prototype.request_data = async function(data_size, user, signature) {
+  async store_data(data, data_size, user, signature) {
+  try {
+    if (!this.white_list.includes(user)) {
+      throw new Error('User not authorized to store data on this node.');
+    }
+
+    const data_string = user + data + this.private_key;
+    if (crypto.createHash('sha256').update(data_string).digest('hex') !== signature) {
+      throw new Error('Invalid signature.');
+    }
+
+    if (blockchain.verify_data(data)) {
+      throw new Error('Data contains malicious content.');
+    }
+
+    // Create new block with the provided data and attach POW nonce
+    const block = {
+      data,
+      user,
+      nonce: 0,
+      difficulty: 5 // initial difficulty for POA
+    };
+
+    let hash;
+    do {
+      block.nonce++;
+      hash = crypto.createHash('sha256').update(JSON.stringify(block)).digest('hex');
+    } while (hash.substr(0, block.difficulty) !== TARGET_HASH);
+
+    const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
+    const utxo = utxos[0];
+
+    const unsigned_tx = await this.xchain.buildBaseTx(utxo, this.private_key.getAddressString(), user, this.token_balance + BLOCK_REWARD);
+    const signed_tx = unsigned_tx.sign(this.private_key);
+    const txid = await this.xchain.issueTx(signed_tx);
+
+    this.token_balance += blockchain.calculate_token_fee(data_size) + BLOCK_REWARD;
+    return { hash, block };
+  } catch (error) {
+    console.error(`Error while storing data: ${error}`);
+    throw error;
+  }
+}
+
+  async request_data(data_size, user, signature) {
   try {
     if (crypto.createHash('sha256').update(user + this.private_key).digest('hex') !== signature) {
       throw new Error('Invalid signature.');
@@ -218,7 +329,7 @@ Node.prototype.request_data = async function(data_size, user, signature) {
 
     if (this.token_balance < blockchain.calculate_token_fee(data_size)) {
       throw new Error('User does not have enough tokens to request data.');
-    }
+    };
 
     const utxos = await this.xchain.getUTXOs(this.private_key.getAddressString());
     const utxo = utxos[0];
@@ -230,7 +341,7 @@ Node.prototype.request_data = async function(data_size, user, signature) {
     const data = network.retrieve_data(data_size);
     if (blockchain.verify_data(data)) {
       throw new Error('Data contains malicious content.');
-    }
+    };
 
     this.token_balance -= blockchain.calculate_token_fee(data_size);
     return data;
@@ -264,7 +375,7 @@ class BlockChain {
   constructor(genesis) {
     this.chain = [genesis];
     this.pending_transactions = [];
-    this.difficulty = 5; // initial difficulty for POW
+    this.difficulty = 5; // initial difficulty for POA
   }
 
   getLastBlock() {
@@ -272,7 +383,7 @@ class BlockChain {
   }
 
   addBlock(block) {
-    // Check if the block's hash matches the POW target
+    // Check if the block's hash matches the POA target
     const hash = crypto.createHash('sha256').update(JSON.stringify(block)).digest('hex');
     if (hash.substr(0, this.difficulty) !== TARGET_HASH) {
       throw new Error('Invalid block hash.');
@@ -356,7 +467,7 @@ const genesisBlock = {
   timestamp: Date.now(),
   miner: '',
   nonce: 0,
-  difficulty: 5 // initial difficulty for POW
+  difficulty: 5 // initial difficulty for POA
 };
 
 const blockchain = new BlockChain(genesisBlock);
@@ -387,3 +498,6 @@ if (blockchain.verifyTransaction(tx)) {
 }
 
 node1.remove_user_from_whitelist('user1');
+function newFunction() {
+  return new Avalanche(network_id, node_api);
+}
